@@ -54,6 +54,10 @@ php vendor/bin/toolkit-resources
 php vendor/bin/themekit-resources
 ```
 
+When `limegreentangerine/class_kit` is installed, the plugin runs
+`classkit-resources` and installs the Concrete package automatically. After a
+Composer update, it runs `classkit-resources` and updates the Concrete package.
+
 - `classkit-resources` installs TypeScript, Svelte, and loader development
   dependencies with npm. Node.js and npm must be available on `PATH`.
 - `toolkit-resources` creates `public/.htaccess` with Concrete CMS rewrite
