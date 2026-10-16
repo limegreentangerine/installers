@@ -17,5 +17,19 @@
         "composer-plugin-api": "^2.0",
         "limegreentangerine/class_kit": "^1.0",
         "limegreentangerine/lgt_toolkit": "^0.0.11"
-    }
+    },
+    "scripts": {
+        "post-package-install": [
+			"@php ./vendor/bin/classkit-resources",
+			"@php ./vendor/bin/toolkit-resources"
+		],
+		"post-update-cmd": [
+			"@php ./vendor/bin/classkit-resources",
+			"@php ./vendor/bin/toolkit-resources"
+		]
+    },
+	"bin": [
+		"bin/classkit-resources",
+		"bin/toolkit-resources"
+	]
 }
