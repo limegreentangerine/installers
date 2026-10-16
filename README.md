@@ -1,4 +1,4 @@
-# LGT Installers
+# Limegreentangerine Installers
 
 `limegreentangerine/installers` is a Composer plugin for setting up
 Limegreentangerine projects built with Concrete CMS. It brings in the shared
@@ -61,8 +61,8 @@ php vendor/bin/toolkit-resources
 ## Included packages
 
 - **ClassKit** provides shared helpers for Concrete CMS package development.
-- **LGT Toolkit** provides the LGT baseline of blocks, attributes, dashboard
-  utilities, services, and site configuration.
+- **LGT Toolkit** provides the Limegreentangerine baseline of blocks, attributes,
+  dashboard utilities, services, and site configuration.
 
 See the respective package documentation for their features and usage:
 [ClassKit README](https://github.com/limegreentangerine/ClassKit#readme) and
