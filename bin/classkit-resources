@@ -50,4 +50,62 @@ foreach ($commands as $command) {
     }
 }
 
+$resourcesFolder = '.' . DIRECTORY_SEPARATOR . 'public/packages/class_kit/resources';
+
+$tsConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'tsconfig.json';
+if (!file_exists($tsConfig)) {
+    if (!copy($tsConfig, './tsconfig.json')) {
+        fwrite(STDERR, "Unable to copy: {$tsConfig}\n");
+    }
+} else {
+    echo "{$tsConfig} exists -- (ignored)\n";
+}
+
+$svelteConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.config.js';
+if (!file_exists($svelteConfig)) {
+    if (!copy($svelteConfig, './svelte.config.js')) {
+        fwrite(STDERR, "Unable to copy: {$svelteConfig}\n");
+    }
+} else {
+    echo "{$svelteConfig} exists -- (ignored)\n";
+}
+
+$svelteTypeDef = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.d.ts';
+if (!file_exists($svelteTypeDef)) {
+    if (!copy($svelteTypeDef, './svelte.d.ts')) {
+        fwrite(STDERR, "Unable to copy: {$svelteTypeDef}\n");
+    }
+} else {
+    echo "{$svelteTypeDef} exists -- (ignored)\n";
+}
+
+$tsDestinationFolder = './public/ts';
+if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
+    fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
+} else {
+    $tsFolder = $resourcesFolder . DIRECTORY_SEPARATOR . 'ts';
+    $tsIterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($tsIterator as $item) {
+        $relativePath = substr($item->getPathname(), strlen($tsFolder) + 1);
+        $destination = $tsDestinationFolder . '/' . $relativePath;
+
+        if ($item->isDir()) {
+            if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+                fwrite(STDERR, "Unable to create: {$relativePath}\n");
+                exit(1);
+            }
+        } elseif (file_exists($destination)) {
+            echo "{$relativePath} exists -- (ignored)\n";
+            continue;
+        } elseif (!copy($item->getPathname(), $destination)) {
+            fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+            exit(1);
+        }
+    }
+}
+
 echo "ClassKit resources installed" . PHP_EOL;
