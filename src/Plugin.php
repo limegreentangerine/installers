@@ -32,6 +32,9 @@ class Plugin implements PluginInterface
 
     public function uninstall(Composer $composer, IOInterface $io): void
     {
+        $this->composer = $composer;
+        $eventDispatcher = $composer->getEventDispatcher();
+        $eventDispatcher->addListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
     }
 
     public function onPostPackageInstall(PackageEvent $event): void
@@ -41,13 +44,23 @@ class Plugin implements PluginInterface
         }
 
         $this->runClassKitResources();
-        $this->runConcreteCommand('c5:package:install');
+        $this->runConcreteCommand('c5:package:install', 'class_kit');
     }
 
     public function onPostUpdate(ScriptEvent $event): void
     {
         $this->runClassKitResources();
-        $this->runConcreteCommand('c5:package:update');
+        $this->runConcreteCommand('c5:package:update', 'class_kit');
+    }
+
+    public function onPrePackageUninstall(PackageEvent $event): void
+    {
+        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/class_kit') {
+            return;
+        }
+
+        $this->runConcreteCommand('c5:package:uninstall', 'class_kit');
+        $this->runRemoveClassKitResources();
     }
 
     private function runClassKitResources(): void
@@ -55,9 +68,14 @@ class Plugin implements PluginInterface
         $this->runVendorCommand('classkit-resources');
     }
 
-    private function runConcreteCommand(string $command): void
+    private function runRemoveClassKitResources(): void
     {
-        $this->runVendorCommand('concrete', $command, 'class_kit');
+        $this->runVendorCommand('uninstall-classkit-resources');
+    }
+
+    private function runConcreteCommand(string $command, string $handle): void
+    {
+        $this->runVendorCommand('concrete', $command, $handle);
     }
 
     private function runVendorCommand(string $binary, string ...$arguments): void

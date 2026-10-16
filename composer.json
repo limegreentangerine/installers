@@ -17,18 +17,9 @@
         "composer-plugin-api": "^2.0",
         "limegreentangerine/class_kit": "dev-svelte-components"
     },
-    "scripts": {
-        "post-package-install": [
-			"@php ./vendor/bin/classkit-resources",
-            "@php ./vendor/bin/concrete c5:package:install class_kit"
-		],
-		"post-update-cmd": [
-			"@php ./vendor/bin/classkit-resources",
-            "@php ./vendor/bin/concrete c5:package:update class_kit"
-		]
-    },
 	"bin": [
-		"bin/classkit-resources"
+		"bin/classkit-resources",
+		"bin/uninstall-classkit-resources"
 	],
     "extra": {
         "class": "Limegreentangerine\\Installers\\Plugin"
