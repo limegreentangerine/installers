@@ -2,63 +2,20 @@
 
 namespace Limegreentangerine\Installers;
 
+use RuntimeException;
 use Composer\Composer;
 use Composer\IO\IOInterface;
-use Composer\Installer\PackageEvent;
-use Composer\Installer\PackageEvents;
-use Composer\Plugin\PluginInterface;
-use Composer\Script\Event as ScriptEvent;
 use Composer\Script\ScriptEvents;
-use RuntimeException;
+use Composer\Installer\PackageEvent;
+use Composer\Plugin\PluginInterface;
+use Composer\Installer\PackageEvents;
+use Composer\Script\Event as ScriptEvent;
 
 class Plugin implements PluginInterface
 {
     private Composer $composer;
 
-    public function activate(Composer $composer, IOInterface $io): void
-    {
-        $this->composer = $composer;
-        $eventDispatcher = $composer->getEventDispatcher();
-        $eventDispatcher->addListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
-        $eventDispatcher->addListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
-        $eventDispatcher->addListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
-    }
-
-    public function deactivate(Composer $composer, IOInterface $io): void
-    {
-        $eventDispatcher = $composer->getEventDispatcher();
-        $eventDispatcher->removeListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
-        $eventDispatcher->removeListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
-        $eventDispatcher->removeListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
-    }
-
-    public function uninstall(Composer $composer, IOInterface $io): void
-    {
-
-    }
-
-    public function onPostPackageInstall(PackageEvent $event): void
-    {
-        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/class_kit') {
-            return;
-        }
-
-        $this->runClassKitResources();
-    }
-
-    public function onPrePackageUninstall(PackageEvent $event): void
-    {
-        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/class_kit') {
-            return;
-        }
-
-        $this->runVendorCommand('uninstall-classkit-resources');
-    }
-
-    public function onPostUpdate(ScriptEvent $event): void
-    {
-        $this->runClassKitResources();
-    }
+    private bool $resourcesUninstalled = false;
 
     private function runClassKitResources(): void
     {
@@ -96,7 +53,7 @@ class Plugin implements PluginInterface
             $command,
             [0 => STDIN, 1 => STDOUT, 2 => STDERR],
             $pipes,
-            $projectRoot
+            $projectRoot,
         );
 
         if (!is_resource($process)) {
@@ -118,5 +75,52 @@ class Plugin implements PluginInterface
         }
 
         return $vendorDir;
+    }
+
+    public function activate(Composer $composer, IOInterface $io): void
+    {
+        $this->composer = $composer;
+        $eventDispatcher = $composer->getEventDispatcher();
+        $eventDispatcher->addListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
+        $eventDispatcher->addListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
+        $eventDispatcher->addListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
+    }
+
+    public function deactivate(Composer $composer, IOInterface $io): void
+    {
+        $eventDispatcher = $composer->getEventDispatcher();
+        $eventDispatcher->removeListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
+        $eventDispatcher->removeListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
+        $eventDispatcher->removeListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
+    }
+
+    public function uninstall(Composer $composer, IOInterface $io): void {}
+
+    public function onPostPackageInstall(PackageEvent $event): void
+    {
+        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/class_kit') {
+            return;
+        }
+
+        $this->runClassKitResources();
+    }
+
+    public function onPrePackageUninstall(PackageEvent $event): void
+    {
+        $name = $event->getOperation()->getPackage()->getName();
+
+        // class_kit is a dependency of this plugin, so the plugin is usually deactivated
+        // before class_kit's uninstall event fires; its own uninstall event is the reliable trigger.
+        if ($this->resourcesUninstalled || !in_array($name, ['limegreentangerine/installers', 'limegreentangerine/class_kit'], true)) {
+            return;
+        }
+
+        $this->resourcesUninstalled = true;
+        $this->runVendorCommand('uninstall-classkit-resources');
+    }
+
+    public function onPostUpdate(ScriptEvent $event): void
+    {
+        $this->runClassKitResources();
     }
 }

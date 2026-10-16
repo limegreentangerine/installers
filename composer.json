@@ -17,6 +17,16 @@
         "composer-plugin-api": "^2.0",
         "limegreentangerine/class_kit": "dev-svelte-components"
     },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpunit/phpunit": "^13.4"
+    },
+    "scripts": {
+        "test": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' vendor/bin/phpunit",
+		"test-coverage": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' vendor/bin/phpunit --coverage-text",
+        "format": "php-cs-fixer fix",
+		"format:check": "php-cs-fixer check --diff"
+    },
 	"bin": [
 		"bin/classkit-resources",
 		"bin/uninstall-classkit-resources"

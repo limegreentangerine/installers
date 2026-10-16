@@ -18,6 +18,15 @@ $commands = [
         '@types/node',
         'svelte',
         'svelte-loader',
+    ],
+    [
+        'npm',
+        'install',
+        '--save',
+        'bootstrap',
+        'bootstrap-icons',
+        '@popperjs/core',
+        '@types/bootstrap',
     ]
 ];
 
