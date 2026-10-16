@@ -13,5 +13,8 @@
             "email": "prolific.jones82@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "limegreentangerine/class_kit": "^1.0",
+        "limegreentangerine/lgt_toolkit": "^0.0.11"
+    }
 }

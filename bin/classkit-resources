@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+echo "Installing ClassKit resources..." . PHP_EOL;
+
+$projectRoot = getcwd();
+
+// install required npm packages
+$commands = [
+    [
+        'npm',
+        'install',
+        '--save-dev',
+        'typescript',
+        'ts-loader',
+        '@types/node',
+        'svelte',
+        'svelte-loader',
+    ]
+];
+
+echo "Installing npm packages..." . PHP_EOL;
+
+foreach ($commands as $command) {
+    $process = proc_open(
+        $command,
+        [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+        $pipes,
+        $projectRoot
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Unable to start npm.');
+    }
+
+    $exitCode = proc_close($process);
+    if ($exitCode !== 0) {
+        exit($exitCode);
+    }
+}
+
+echo "ClassKit resources installed" . PHP_EOL;
