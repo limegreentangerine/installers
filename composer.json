@@ -1,0 +1,17 @@
+{
+    "name": "limegreentangerine/installers",
+    "description": "Installer package for configuring new concrete CMS sites",
+    "type": "composer-plugin",
+    "autoload": {
+        "psr-4": {
+            "Limegreentangerine\\Installers\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Lee Jones",
+            "email": "prolific.jones82@gmail.com"
+        }
+    ],
+    "require": {}
+}
