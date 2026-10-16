@@ -2,6 +2,8 @@
     "name": "limegreentangerine/installers",
     "description": "Installer package for configuring new concrete CMS sites",
     "type": "composer-plugin",
+    "minimum-stability": "dev",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Limegreentangerine\\Installers\\": "src/"
