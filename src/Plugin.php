@@ -20,6 +20,7 @@ class Plugin implements PluginInterface
         $this->composer = $composer;
         $eventDispatcher = $composer->getEventDispatcher();
         $eventDispatcher->addListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
+        $eventDispatcher->addListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
         $eventDispatcher->addListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
     }
 
@@ -27,14 +28,13 @@ class Plugin implements PluginInterface
     {
         $eventDispatcher = $composer->getEventDispatcher();
         $eventDispatcher->removeListener(PackageEvents::POST_PACKAGE_INSTALL, [$this, 'onPostPackageInstall']);
+        $eventDispatcher->removeListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
         $eventDispatcher->removeListener(ScriptEvents::POST_UPDATE_CMD, [$this, 'onPostUpdate']);
     }
 
     public function uninstall(Composer $composer, IOInterface $io): void
     {
-        $this->composer = $composer;
-        $eventDispatcher = $composer->getEventDispatcher();
-        $eventDispatcher->addListener(PackageEvents::PRE_PACKAGE_UNINSTALL, [$this, 'onPrePackageUninstall']);
+
     }
 
     public function onPostPackageInstall(PackageEvent $event): void
@@ -44,13 +44,6 @@ class Plugin implements PluginInterface
         }
 
         $this->runClassKitResources();
-        $this->runConcreteCommand('c5:package:install', 'class_kit');
-    }
-
-    public function onPostUpdate(ScriptEvent $event): void
-    {
-        $this->runClassKitResources();
-        $this->runConcreteCommand('c5:package:update', 'class_kit');
     }
 
     public function onPrePackageUninstall(PackageEvent $event): void
@@ -59,8 +52,12 @@ class Plugin implements PluginInterface
             return;
         }
 
-        $this->runConcreteCommand('c5:package:uninstall', 'class_kit');
-        $this->runRemoveClassKitResources();
+        $this->runVendorCommand('uninstall-classkit-resources');
+    }
+
+    public function onPostUpdate(ScriptEvent $event): void
+    {
+        $this->runClassKitResources();
     }
 
     private function runClassKitResources(): void
@@ -73,11 +70,6 @@ class Plugin implements PluginInterface
         $this->runVendorCommand('uninstall-classkit-resources');
     }
 
-    private function runConcreteCommand(string $command, string $handle): void
-    {
-        $this->runVendorCommand('concrete', $command, $handle);
-    }
-
     private function runVendorCommand(string $binary, string ...$arguments): void
     {
         $vendorDir = $this->getVendorDir();
@@ -87,6 +79,17 @@ class Plugin implements PluginInterface
 
         if ($projectRoot === false) {
             throw new RuntimeException('Unable to determine the Composer project directory.');
+        }
+
+        // The concrete CLI detects DIR_BASE from the cwd, so it must run from the web root.
+        if ($binary === 'concrete') {
+            foreach (['public', 'web'] as $webRoot) {
+                $candidate = $projectRoot . DIRECTORY_SEPARATOR . $webRoot;
+                if (is_file($candidate . DIRECTORY_SEPARATOR . 'index.php')) {
+                    $projectRoot = $candidate;
+                    break;
+                }
+            }
         }
 
         $process = proc_open(
