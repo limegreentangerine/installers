@@ -31,5 +31,8 @@
 	"bin": [
 		"bin/classkit-resources",
 		"bin/toolkit-resources"
-	]
+	],
+    "extra": {
+        "class": "Limegreentangerine\\Installers\\Plugin"
+    }
 }
