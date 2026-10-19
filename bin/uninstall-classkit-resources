@@ -56,7 +56,7 @@ foreach ($filesToRemove as $ftr) {
     }
 }
 
-$tsDestinationFolder = './public/ts';
+$tsDestinationFolder = './src/ts';
 $tsIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($tsDestinationFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
