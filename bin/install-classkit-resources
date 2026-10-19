@@ -12,6 +12,7 @@ $commands = [
     [
         'npm',
         'install',
+        '--loglevel=error',
         '--save-dev',
         'typescript@^6.0.3',
         'ts-loader',
@@ -69,6 +70,22 @@ foreach ($filesToInstall as $fti) {
     }
 }
 
+function rrmdir(string $dir)
+{
+    if (is_dir($dir)) {
+        $objects = scandir($dir);
+        foreach ($objects as $object) {
+            if ($object != "." && $object != "..") {
+                if (is_dir($dir . DIRECTORY_SEPARATOR . $object) && !is_link($dir . "/" . $object))
+                    rrmdir($dir . DIRECTORY_SEPARATOR . $object);
+                else
+                    unlink($dir . DIRECTORY_SEPARATOR . $object);
+            }
+        }
+        rmdir($dir);
+    }
+}
+
 $tsDestinationFolder = './resources/ts';
 if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
     fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
@@ -97,37 +114,7 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
         }
     }
 
-    $tsIterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
-
-    foreach ($tsIterator as $item) {
-        $pathname = $item->getPathname();
-        if (!$item->isDir()) {
-            $removed = unlink($pathname);
-
-            if (!$removed) {
-                fwrite(STDERR, "Unable to remove: {$pathname}\n");
-            }
-        }
-    }
-
-    $tsIterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
-
-    foreach ($tsIterator as $item) {
-        $pathname = $item->getPathname();
-        if ($item->isDir()) {
-            $removed = rmdir($pathname);
-
-            if (!$removed) {
-                fwrite(STDERR, "Unable to remove: {$pathname}\n");
-            }
-        }
-    }
+    rrmdir($tsFolder);
 }
 
 echo "ClassKit resources installed" . PHP_EOL;

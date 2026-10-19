@@ -23,16 +23,6 @@ class Plugin implements PluginInterface
         $this->runVendorCommand('classkit-resources', Action::Install);
     }
 
-    public function runToolkitResources(): void
-    {
-        $this->runVendorCommand('toolkit-resources', Action::Install);
-    }
-
-    public function runThemekitResources(): void
-    {
-        $this->runVendorCommand('themekit-resources', Action::Install);
-    }
-
     private function runRemoveClassKitResources(): void
     {
         $this->runVendorCommand('classkit-resources', Action::Uninstall);
@@ -86,6 +76,16 @@ class Plugin implements PluginInterface
         }
 
         return $vendorDir;
+    }
+
+    public function runToolkitResources(): void
+    {
+        $this->runVendorCommand('toolkit-resources', Action::Install);
+    }
+
+    public function runThemekitResources(): void
+    {
+        $this->runVendorCommand('themekit-resources', Action::Install);
     }
 
     public function activate(Composer $composer, IOInterface $io): void
