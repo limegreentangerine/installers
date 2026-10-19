@@ -58,12 +58,12 @@ class Plugin implements PluginInterface
         );
 
         if (!is_resource($process)) {
-            throw new RuntimeException(sprintf('Unable to start command "%s".', $binary));
+            throw new RuntimeException(sprintf('Unable to start command "%s-%s".', $action->value, $binary));
         }
 
         $exitCode = proc_close($process);
         if ($exitCode !== 0) {
-            throw new RuntimeException(sprintf('Command "%s" failed with exit code %d.', $binary, $exitCode));
+            throw new RuntimeException(sprintf('Command "%s-%s" failed with exit code %d.', $action->value, $binary, $exitCode));
         }
     }
 
