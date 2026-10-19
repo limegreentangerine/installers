@@ -42,6 +42,7 @@ foreach ($commands as $command) {
 }
 
 $filesToRemove = [
+    './svelte-components.json',
     './tsconfig.json',
     './svelte.config.js',
     './svelte.d.ts'

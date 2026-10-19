@@ -42,42 +42,24 @@ foreach ($commands as $command) {
 }
 
 $resourcesFolder = '.' . DIRECTORY_SEPARATOR . 'public/packages/class_kit/resources';
+$filesToInstall = [
+    'svelte-components.json',
+    'tsconfig.json',
+    'svelte.config.js',
+    'svelte.d.ts'
+];
 
+foreach ($filesToInstall as $fti) {
+    $source = $resourcesFolder . DIRECTORY_SEPARATOR . $fti;
+    $destination = './' . $fti;
 
-$componentConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte-components.json';
-if (file_exists($componentConfig) && !file_exists('./svelte-components.json')) {
-    if (!copy($componentConfig, './svelte-components.json')) {
-        fwrite(STDERR, "Unable to copy: {$componentConfig}\n");
+    if (file_exists($source) && !file_exists($destination)) {
+        if (!copy($source, $destination)) {
+            fwrite(STDERR, "Unable to copy: {$source}\n");
+        }
+    } else {
+        echo "{$destination} exists -- (ignored)\n";
     }
-} else {
-    echo "./svelte-components.json exists -- (ignored)\n";
-}
-
-$tsConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'tsconfig.json';
-if (file_exists($tsConfig) && !file_exists('./tsconfig.json')) {
-    if (!copy($tsConfig, './tsconfig.json')) {
-        fwrite(STDERR, "Unable to copy: {$tsConfig}\n");
-    }
-} else {
-    echo "{$tsConfig} exists -- (ignored)\n";
-}
-
-$svelteConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.config.js';
-if (file_exists($svelteConfig) && !file_exists('./svelte.config.js')) {
-    if (!copy($svelteConfig, './svelte.config.js')) {
-        fwrite(STDERR, "Unable to copy: {$svelteConfig}\n");
-    }
-} else {
-    echo "{$svelteConfig} exists -- (ignored)\n";
-}
-
-$svelteTypeDef = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.d.ts';
-if (file_exists($svelteTypeDef) && !file_exists('./svelte.d.ts')) {
-    if (!copy($svelteTypeDef, './svelte.d.ts')) {
-        fwrite(STDERR, "Unable to copy: {$svelteTypeDef}\n");
-    }
-} else {
-    echo "{$svelteTypeDef} exists -- (ignored)\n";
 }
 
 $tsDestinationFolder = './public/ts';
