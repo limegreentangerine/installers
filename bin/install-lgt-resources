@@ -105,57 +105,36 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
     fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
 } else {
     $tsFolder = $resourcesFolder . DIRECTORY_SEPARATOR . 'ts';
-    $tsIterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
-        RecursiveIteratorIterator::SELF_FIRST
-    );
 
-    foreach ($tsIterator as $item) {
-        $relativePath = substr($item->getPathname(), strlen($tsFolder) + 1);
-        $destination = $tsDestinationFolder . '/' . $relativePath;
+    if (file_exists($tsFolder)) {
+        $tsIterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
 
-        if ($item->isDir()) {
-            if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
-                fwrite(STDERR, "Unable to create: {$relativePath}\n");
+        foreach ($tsIterator as $item) {
+            $relativePath = substr($item->getPathname(), strlen($tsFolder) + 1);
+            $destination = $tsDestinationFolder . '/' . $relativePath;
+
+            if ($item->isDir()) {
+                if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+                    fwrite(STDERR, "Unable to create: {$relativePath}\n");
+                    exit(1);
+                }
+            } elseif (file_exists($destination)) {
+                echo "{$relativePath} exists -- (ignored)\n";
+                continue;
+            } elseif (!copy($item->getPathname(), $destination)) {
+                fwrite(STDERR, "Unable to copy: {$relativePath}\n");
                 exit(1);
             }
-        } elseif (file_exists($destination)) {
-            echo "{$relativePath} exists -- (ignored)\n";
-            continue;
-        } elseif (!copy($item->getPathname(), $destination)) {
-            fwrite(STDERR, "Unable to copy: {$relativePath}\n");
-            exit(1);
         }
+
+        rrmdir($tsFolder);
     }
-
-    rrmdir($tsFolder);
 }
 
-echo "ClassKit resources installed, installing ClassKit package to Concrete..." . PHP_EOL;
-
-$command = [
-    './vendor/bin/concrete',
-    'c5:package:install',
-    'class_kit'
-];
-
-$process = proc_open(
-    $command,
-    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
-    $pipes,
-    $projectRoot
-);
-
-if (!is_resource($process)) {
-    throw new RuntimeException('Unable to run c5 command.');
-}
-
-$exitCode = proc_close($process);
-if ($exitCode !== 0) {
-    exit($exitCode);
-}
-
-echo 'ClassKit package installed to Concrete' . PHP_EOL;
+echo "ClassKit resources installed" . PHP_EOL;
 
 #
 #
@@ -196,31 +175,7 @@ if (file_exists($destination)) {
 }
 
 
-echo "LGT Toolkit resources installed, installing LGT Toolkit package to Concrete..." . PHP_EOL;
-
-$command = [
-    './vendor/bin/concrete',
-    'c5:package:install',
-    'lgt_toolkit'
-];
-
-$process = proc_open(
-    $command,
-    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
-    $pipes,
-    $projectRoot
-);
-
-if (!is_resource($process)) {
-    throw new RuntimeException('Unable to run c5 command.');
-}
-
-$exitCode = proc_close($process);
-if ($exitCode !== 0) {
-    exit($exitCode);
-}
-
-echo 'LGT Toolkit installed to Concrete' . PHP_EOL;
+echo "LGT Toolkit resources installed" . PHP_EOL;
 
 #
 #
@@ -511,3 +466,57 @@ echo "Application config updated" . PHP_EOL;
 echo "ThemeKit resources installed" . PHP_EOL;
 echo "Theme structure created in /public/application/themes/" . $themeFolderName . PHP_EOL;
 echo "Source files created in /src/themes/" . $themeFolderName . PHP_EOL;
+
+#
+#
+# Running CONCRETE INSTALLS
+#
+#
+
+echo "Installing ClassKit package to Concrete..." . PHP_EOL;
+
+$command = [
+    './vendor/bin/concrete',
+    'c5:package:install',
+    'class_kit'
+];
+
+$process = proc_open(
+    $command,
+    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+    $pipes,
+    $projectRoot
+);
+
+if (!is_resource($process)) {
+    throw new RuntimeException('Unable to run c5 command.');
+}
+
+$exitCode = proc_close($process);
+if ($exitCode !== 0) {
+    exit($exitCode);
+}
+
+echo "Installing LGT Toolkit package to Concrete..." . PHP_EOL;
+
+$command = [
+    './vendor/bin/concrete',
+    'c5:package:install',
+    'lgt_toolkit'
+];
+
+$process = proc_open(
+    $command,
+    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+    $pipes,
+    $projectRoot
+);
+
+if (!is_resource($process)) {
+    throw new RuntimeException('Unable to run c5 command.');
+}
+
+$exitCode = proc_close($process);
+if ($exitCode !== 0) {
+    exit($exitCode);
+}
