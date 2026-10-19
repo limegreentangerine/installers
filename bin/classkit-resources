@@ -52,17 +52,18 @@ foreach ($commands as $command) {
 
 $resourcesFolder = '.' . DIRECTORY_SEPARATOR . 'public/packages/class_kit/resources';
 
+
 $componentConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte-components.json';
-if (!file_exists($componentConfig)) {
+if (file_exists($componentConfig) && !file_exists('./svelte-components.json')) {
     if (!copy($componentConfig, './svelte-components.json')) {
         fwrite(STDERR, "Unable to copy: {$componentConfig}\n");
     }
 } else {
-    echo "{$componentConfig} exists -- (ignored)\n";
+    echo "./svelte-components.json exists -- (ignored)\n";
 }
 
 $tsConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'tsconfig.json';
-if (!file_exists($tsConfig)) {
+if (file_exists($tsConfig) && !file_exists('./tsconfig.json')) {
     if (!copy($tsConfig, './tsconfig.json')) {
         fwrite(STDERR, "Unable to copy: {$tsConfig}\n");
     }
@@ -71,7 +72,7 @@ if (!file_exists($tsConfig)) {
 }
 
 $svelteConfig = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.config.js';
-if (!file_exists($svelteConfig)) {
+if (file_exists($svelteConfig) && !file_exists('./svelte.config.js')) {
     if (!copy($svelteConfig, './svelte.config.js')) {
         fwrite(STDERR, "Unable to copy: {$svelteConfig}\n");
     }
@@ -80,7 +81,7 @@ if (!file_exists($svelteConfig)) {
 }
 
 $svelteTypeDef = $resourcesFolder . DIRECTORY_SEPARATOR . 'svelte.d.ts';
-if (!file_exists($svelteTypeDef)) {
+if (file_exists($svelteTypeDef) && !file_exists('./svelte.d.ts')) {
     if (!copy($svelteTypeDef, './svelte.d.ts')) {
         fwrite(STDERR, "Unable to copy: {$svelteTypeDef}\n");
     }
