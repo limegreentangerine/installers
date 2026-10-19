@@ -109,22 +109,18 @@ class Plugin implements PluginInterface
 
     public function onPostPackageInstall(PackageEvent $event): void
     {
-        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/class_kit') {
+        $pkgArr = [
+            'limegreentangerine/class_kit',
+            'limegreentangerine/lgt_toolkit',
+            'limegreentangerine/theme_kit'
+        ];
+
+        if (!in_array($event->getOperation()->getPackage()->getName(), $pkgArr)) {
             return;
         }
 
         $this->runClassKitResources();
-
-        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/lgt_toolkit') {
-            return;
-        }
-
         $this->runToolkitResources();
-
-        // if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/theme_kit') {
-        //     return;
-        // }
-
         // $this->runThemekitResources();
     }
 

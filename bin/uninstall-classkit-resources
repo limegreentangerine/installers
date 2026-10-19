@@ -12,6 +12,7 @@ $commands = [
     [
         'npm',
         'uninstall',
+        '--loglevel=error',
         '--save-dev',
         'typescript',
         'ts-loader',
