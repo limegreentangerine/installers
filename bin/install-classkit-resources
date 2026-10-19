@@ -62,7 +62,7 @@ foreach ($filesToInstall as $fti) {
     }
 }
 
-$tsDestinationFolder = './src/ts';
+$tsDestinationFolder = './resources/ts';
 if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
     fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
 } else {

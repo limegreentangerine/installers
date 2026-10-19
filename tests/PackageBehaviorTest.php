@@ -165,6 +165,8 @@ final class PackageBehaviorTest extends TestCase
     {
         $project = $this->temporaryDirectory . '/project';
         mkdir($project);
+        mkdir($project . '/resources/ts/nested/deep', 0755, true);
+        file_put_contents($project . '/resources/ts/nested/deep/component.ts', 'export {};');
         $npm = $this->createNpmStub();
 
         $result = $this->runScript(
@@ -175,6 +177,7 @@ final class PackageBehaviorTest extends TestCase
         );
 
         self::assertSame(0, $result['exitCode'], $result['stderr']);
+        self::assertDirectoryDoesNotExist($project . '/resources/ts');
         self::assertSame([
             realpath($project) . "\tuninstall --save-dev typescript ts-loader @types/node svelte svelte-loader",
         ], file($npm['log'], FILE_IGNORE_NEW_LINES));

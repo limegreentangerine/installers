@@ -56,18 +56,24 @@ foreach ($filesToRemove as $ftr) {
     }
 }
 
-$tsDestinationFolder = './src/ts';
-$tsIterator = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($tsDestinationFolder, FilesystemIterator::SKIP_DOTS),
-    RecursiveIteratorIterator::SELF_FIRST
-);
+$tsDestinationFolder = './resources/ts';
+$tsIterator = is_dir($tsDestinationFolder)
+    ? new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($tsDestinationFolder, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    )
+    : [];
 
 foreach ($tsIterator as $item) {
-    if (file_exists($item->getPathname())) {
-        if (!unlink($item->getPathname())) {
-            fwrite(STDERR, "Unable to remove: {$item->getPathname()}\n");
-        }
+    $pathname = $item->getPathname();
+    $removed = $item->isDir() ? rmdir($pathname) : unlink($pathname);
+    if (!$removed) {
+        fwrite(STDERR, "Unable to remove: {$pathname}\n");
     }
+}
+
+if (is_dir($tsDestinationFolder) && !rmdir($tsDestinationFolder)) {
+    fwrite(STDERR, "Unable to remove: {$tsDestinationFolder}\n");
 }
 
 echo "ClassKit resources uninstalled" . PHP_EOL;
