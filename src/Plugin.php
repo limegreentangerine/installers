@@ -18,14 +18,14 @@ class Plugin implements PluginInterface
 
     private bool $resourcesUninstalled = false;
 
-    private function runClassKitResources(): void
+    private function runLgtResources(): void
     {
-        $this->runVendorCommand('classkit-resources', Action::Install);
+        $this->runVendorCommand('lgt-resources', Action::Install);
     }
 
-    private function runRemoveClassKitResources(): void
+    private function runRemoveLgtResources(): void
     {
-        $this->runVendorCommand('classkit-resources', Action::Uninstall);
+        $this->runVendorCommand('lgt-resources', Action::Uninstall);
     }
 
     private function runVendorCommand(string $binary, Action $action, string ...$arguments): void
@@ -109,7 +109,6 @@ class Plugin implements PluginInterface
 
     public function onPostPackageInstall(PackageEvent $event): void
     {
-        var_dump($event->getOperation()->getPackage()->getName());
         $pkgArr = [
             'limegreentangerine/class_kit',
             'limegreentangerine/lgt_toolkit',
@@ -117,13 +116,10 @@ class Plugin implements PluginInterface
         ];
 
         if (!in_array($event->getOperation()->getPackage()->getName(), $pkgArr)) {
-            var_dump('NOT IN ARRAY');
             return;
         }
 
-        $this->runClassKitResources();
-        $this->runToolkitResources();
-        // $this->runThemekitResources();
+        $this->runLgtResources();
     }
 
     public function onPrePackageUninstall(PackageEvent $event): void
@@ -137,11 +133,11 @@ class Plugin implements PluginInterface
         }
 
         $this->resourcesUninstalled = true;
-        $this->runRemoveClassKitResources();
+        $this->runRemoveLgtResources();
     }
 
     public function onPostUpdate(ScriptEvent $event): void
     {
-        $this->runClassKitResources();
+        $this->runLgtResources();
     }
 }

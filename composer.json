@@ -31,10 +31,8 @@
 		"format:check": "php-cs-fixer check --diff"
     },
 	"bin": [
-		"bin/install-classkit-resources",
-		"bin/install-toolkit-resources",
-		"bin/uninstall-classkit-resources",
-		"bin/install-toolkit-resources"
+		"bin/install-lgt-resources",
+		"bin/uninstall-lgt-resources"
 	],
     "extra": {
         "class": "Limegreentangerine\\Installers\\Plugin"
