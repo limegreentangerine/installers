@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+echo "Installing LGT Toolkit resources..." . PHP_EOL;
+
+$filename = '.htaccess';
+$destination = '.' . DIRECTORY_SEPARATOR  . 'public' . DIRECTORY_SEPARATOR . $filename;
+
+echo "Creating .htaccess..." . PHP_EOL;
+
+if (file_exists($destination)) {
+    echo "Skipped (already exists): " . basename($filename) . PHP_EOL;
+    exit(0);
+} else {
+	$contents = <<<'HTACCESS'
+	# -- concrete urls start --
+	<IfModule mod_rewrite.c>
+		RewriteEngine On
+		RewriteBase /
+		RewriteCond %{REQUEST_FILENAME} !-f
+		RewriteCond %{REQUEST_FILENAME}/index.html !-f
+		RewriteCond %{REQUEST_FILENAME}/index.php !-f
+		RewriteRule . index.php [L]
+	</IfModule>
+	# -- concrete urls end --
+	HTACCESS;
+
+	if (file_put_contents($destination, $contents) === false) {
+		fwrite(STDERR, "Failed to create: " . basename($filename) . PHP_EOL);
+		exit(1);
+	}
+
+	echo ".htaccess created" . PHP_EOL;
+}
+
+
+echo "LGT Toolkit resources installed" . PHP_EOL;

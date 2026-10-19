@@ -61,6 +61,8 @@ foreach ($filesToInstall as $fti) {
     if (file_exists($source) && !file_exists($destination)) {
         if (!copy($source, $destination)) {
             fwrite(STDERR, "Unable to copy: {$source}\n");
+        } else {
+            unlink($source);
         }
     } else {
         echo "{$destination} exists -- (ignored)\n";
@@ -85,6 +87,8 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
             if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
                 fwrite(STDERR, "Unable to create: {$relativePath}\n");
                 exit(1);
+            } else {
+                rmdir($destination);
             }
         } elseif (file_exists($destination)) {
             echo "{$relativePath} exists -- (ignored)\n";
@@ -92,6 +96,8 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
         } elseif (!copy($item->getPathname(), $destination)) {
             fwrite(STDERR, "Unable to copy: {$relativePath}\n");
             exit(1);
+        } else {
+            unlink($item->getPathname());
         }
     }
 }
