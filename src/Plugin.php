@@ -112,7 +112,7 @@ class Plugin implements PluginInterface
         $pkgArr = [
             'limegreentangerine/class_kit',
             'limegreentangerine/lgt_toolkit',
-            'limegreentangerine/theme_kit'
+            'limegreentangerine/theme_kit',
         ];
 
         if (!in_array($event->getOperation()->getPackage()->getName(), $pkgArr)) {
