@@ -18,6 +18,10 @@ $commands = [
         '@types/node',
         'svelte',
         'svelte-loader',
+        'svelte-preprocess',
+        'resolve-url-loader',
+        'sass',
+        'sass-loader',
     ]
 ];
 

@@ -17,7 +17,7 @@
     ],
     "require": {
         "composer-plugin-api": "^2.0",
-        "limegreentangerine/class_kit": "dev-svelte-components"
+        "limegreentangerine/class_kit": "^2.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",
