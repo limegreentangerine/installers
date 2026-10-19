@@ -57,16 +57,12 @@ foreach ($filesToInstall as $fti) {
         if (!copy($source, $destination)) {
             fwrite(STDERR, "Unable to copy: {$source}\n");
         }
-
-        if ($fti === 'svelte-components.json') {
-            chmod($destination, 755);
-        }
     } else {
         echo "{$destination} exists -- (ignored)\n";
     }
 }
 
-$tsDestinationFolder = './public/ts';
+$tsDestinationFolder = './src/ts';
 if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
     fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
 } else {
