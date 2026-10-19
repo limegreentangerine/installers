@@ -10,6 +10,7 @@ use Composer\Installer\PackageEvent;
 use Composer\Plugin\PluginInterface;
 use Composer\Installer\PackageEvents;
 use Composer\Script\Event as ScriptEvent;
+use Limegreentangerine\Installers\Enums\Action;
 
 class Plugin implements PluginInterface
 {
@@ -19,18 +20,18 @@ class Plugin implements PluginInterface
 
     private function runClassKitResources(): void
     {
-        $this->runVendorCommand('classkit-resources');
+        $this->runVendorCommand('classkit-resources', Action::Install);
     }
 
     private function runRemoveClassKitResources(): void
     {
-        $this->runVendorCommand('uninstall-classkit-resources');
+        $this->runVendorCommand('classkit-resources', Action::Uninstall);
     }
 
-    private function runVendorCommand(string $binary, string ...$arguments): void
+    private function runVendorCommand(string $binary, Action $action, string ...$arguments): void
     {
         $vendorDir = $this->getVendorDir();
-        $binaryPath = rtrim($vendorDir, '/\\') . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $binary;
+        $binaryPath = rtrim($vendorDir, '/\\') . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $action->value . DIRECTORY_SEPARATOR . $binary;
         $command = [PHP_BINARY, $binaryPath, ...$arguments];
         $projectRoot = getcwd();
 
@@ -116,7 +117,7 @@ class Plugin implements PluginInterface
         }
 
         $this->resourcesUninstalled = true;
-        $this->runVendorCommand('uninstall-classkit-resources');
+        $this->runVendorCommand('classkit-resources', Action::Uninstall);
     }
 
     public function onPostUpdate(ScriptEvent $event): void

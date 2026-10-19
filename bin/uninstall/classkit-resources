@@ -41,4 +41,32 @@ foreach ($commands as $command) {
     }
 }
 
+$filesToRemove = [
+    './tsconfig.json',
+    './svelte.config.js',
+    './svelte.d.ts'
+];
+
+foreach ($filesToRemove as $ftr) {
+    if (file_exists($ftr)) {
+        if (!unlink($ftr)) {
+            fwrite(STDERR, "Unable to remove: {$ftr}\n");
+        }
+    }
+}
+
+$tsDestinationFolder = './public/ts';
+$tsIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($tsDestinationFolder, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+foreach ($tsIterator as $item) {
+    if (file_exists($item->getPathname())) {
+        if (!unlink($item->getPathname())) {
+            fwrite(STDERR, "Unable to remove: {$item->getPathname()}\n");
+        }
+    }
+}
+
 echo "ClassKit resources uninstalled" . PHP_EOL;
