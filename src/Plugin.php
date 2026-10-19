@@ -31,7 +31,7 @@ class Plugin implements PluginInterface
     private function runVendorCommand(string $binary, Action $action, string ...$arguments): void
     {
         $vendorDir = $this->getVendorDir();
-        $binaryPath = rtrim($vendorDir, '/\\') . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $action->value . DIRECTORY_SEPARATOR . $binary;
+        $binaryPath = rtrim($vendorDir, '/\\') . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . $action->value . '-' . $binary;
         $command = [PHP_BINARY, $binaryPath, ...$arguments];
         $projectRoot = getcwd();
 
