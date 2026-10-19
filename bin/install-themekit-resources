@@ -26,8 +26,7 @@ $commands = [
         'typescript',
         'ts-loader',
         '@types/node',
-        '@types/bootstrap',
-        'webpack@5.98.0' // TODO: 'webpack@5.98.0' bug fix for default mix in concrete builder needs checking on a new install
+        '@types/bootstrap'
     ],
     [
         'npm',

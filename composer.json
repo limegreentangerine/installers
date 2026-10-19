@@ -2,7 +2,7 @@
     "name": "limegreentangerine/installers",
     "description": "Installer package for configuring new concrete CMS sites",
     "type": "composer-plugin",
-    "minimum-stability": "dev",
+    "prefer-stable": true,
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -18,7 +18,8 @@
     "require": {
         "composer-plugin-api": "^2.0",
         "limegreentangerine/class_kit": "^2.0",
-        "limegreentangerine/lgt_toolkit": "^1.0"
+        "limegreentangerine/lgt_toolkit": "^1.0",
+        "limegreentangerine/theme_kit": "^1.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95",

@@ -208,3 +208,287 @@ if ($exitCode !== 0) {
 }
 
 echo 'LGT Toolkit installed to Concrete' . PHP_EOL;
+
+echo "Installing ThemeKit resources..." . PHP_EOL;
+
+$projectRoot = getcwd();
+$packageDirectory = dirname(__DIR__);
+
+do {
+    echo 'Theme handle: ';
+    $themeFolderName = trim((string) fgets(STDIN));
+    $isValidName = preg_match('/^[A-Za-z0-9_-]+$/', $themeFolderName) === 1;
+    if (!$isValidName) {
+        echo "Use only letters, numbers, hyphens and underscores." . PHP_EOL;
+    }
+} while (!$isValidName);
+
+// install required npm packages
+$commands = [
+    [
+        'npm',
+        'install',
+        '--save-dev',
+        'typescript',
+        'ts-loader',
+        '@types/node',
+        '@types/bootstrap'
+    ],
+    [
+        'npm',
+        'install',
+        '--save',
+        'bootstrap@^5.0.0',
+        '@popperjs/core',
+        'bootstrap-icons'
+    ]
+];
+
+echo "Installing npm packages..." . PHP_EOL;
+
+foreach ($commands as $command) {
+    $process = proc_open(
+        $command,
+        [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+        $pipes,
+        $projectRoot
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Unable to start npm.');
+    }
+
+    $exitCode = proc_close($process);
+    if ($exitCode !== 0) {
+        exit($exitCode);
+    }
+}
+
+echo "Creating folders for src files..." . PHP_EOL;
+
+$rootResources = $packageDirectory . '/resources/root';
+foreach (new DirectoryIterator($rootResources) as $file) {
+    if ($file->isFile()) {
+        $sourceFile = $rootResources . '/' . $file->getFilename();
+        $destinationFile = $projectRoot . '/../' . $file->getFilename();
+
+        if (!copy($sourceFile, $destinationFile)) {
+            fwrite(STDERR, "Unable to copy, please try manually: {$sourceFile}\n");
+            continue;
+        }
+
+        $contents = file_get_contents($destinationFile);
+
+        if (!$contents) {
+            fwrite(STDERR, "Unable to open file to rename theme folder reference, please try manually: {$destinationFile}\n");
+        } else {
+            $contents = str_replace('{{THEME_NAME}}', (string) $themeFolderName, $contents);
+
+            if (!file_put_contents($destinationFile, $contents)) {
+                fwrite(STDERR, "Unable to write updated file contents, please try manually: {$destinationFile}\n");
+            }
+        }
+    }
+}
+
+// create src root
+$srcRoot = $projectRoot . '/src/themes/' . $themeFolderName;
+if (!is_dir($srcRoot) && !mkdir($srcRoot, 0755, true)) {
+    fwrite(STDERR, "Unable to create: {$srcRoot}\n");
+    exit(1);
+}
+
+echo "Creating /src/scss file structure..." . PHP_EOL;
+
+// define scss folder and iterator, then process
+$scssFolder = $packageDirectory . '/resources/scss';
+$scssIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($scssFolder, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+foreach ($scssIterator as $item) {
+    $relativePath = substr($item->getPathname(), strlen($scssFolder) + 1);
+    $destination = $srcRoot . '/scss/' . $relativePath;
+
+    if ($item->isDir()) {
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+            fwrite(STDERR, "Unable to create: {$relativePath}\n");
+            exit(1);
+        }
+    } elseif (file_exists($destination)) {
+        echo "{$relativePath} exists -- (ignored)\n";
+        continue;
+    } elseif (!copy($item->getPathname(), $destination)) {
+        fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+        exit(1);
+    }
+
+    if ($item->getFilename() === 'site.scss') {
+        $contents = file_get_contents($destination);
+
+        if (!$contents) {
+            fwrite(STDERR, "Unable to open file to rename theme folder reference, please try manually: {$destination}\n");
+        } else {
+            $contents = str_replace('{{THEME_NAME}}', (string) $themeFolderName, $contents);
+
+            if (!file_put_contents($destination, $contents)) {
+                fwrite(STDERR, "Unable to write updated file contents, please try manually: {$destination}\n");
+            }
+        }
+    }
+}
+
+echo "Creating /src/ts file structure..." . PHP_EOL;
+
+// define ts folder and iterator, then process
+$tsFolder = $packageDirectory . '/resources/ts';
+$tsIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+foreach ($tsIterator as $item) {
+    $relativePath = substr($item->getPathname(), strlen($tsFolder) + 1);
+    $destination = $srcRoot . '/ts/' . $relativePath;
+
+    if ($item->isDir()) {
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+            fwrite(STDERR, "Unable to create: {$relativePath}\n");
+            exit(1);
+        }
+    } elseif (file_exists($destination)) {
+        echo "{$relativePath} exists -- (ignored)\n";
+        continue;
+    } elseif (!copy($item->getPathname(), $destination)) {
+        fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+        exit(1);
+    }
+}
+
+echo "Creating theme destination folder..." . PHP_EOL;
+
+$skeletonDestinationFolder = $projectRoot . '/public/application/themes/' . $themeFolderName;
+if (!is_dir($skeletonDestinationFolder) && !mkdir($skeletonDestinationFolder, 0755, true)) {
+    fwrite(STDERR, "Unable to create: {$skeletonDestinationFolder}\n");
+    exit(1);
+}
+
+echo "Creating theme skeleton in destination folder..." . PHP_EOL;
+
+$skeletonFolder = $packageDirectory . '/resources/_skeleton';
+$skeletonIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($skeletonFolder, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+foreach ($skeletonIterator as $item) {
+    $relativePath = substr($item->getPathname(), strlen($skeletonFolder) + 1);
+    $destination = $skeletonDestinationFolder . '/' . $relativePath;
+
+    if ($item->isDir()) {
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+            fwrite(STDERR, "Unable to create: {$relativePath}\n");
+            exit(1);
+        }
+    } elseif (file_exists($destination)) {
+        echo "{$relativePath} exists -- (ignored)\n";
+        continue;
+    } elseif (!copy($item->getPathname(), $destination)) {
+        fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+        exit(1);
+    }
+}
+
+echo "Editing PageTheme class..." . PHP_EOL;
+
+$pageThemePath = $skeletonDestinationFolder = $projectRoot . '/public/application/themes/' . $themeFolderName . '/page_theme.php';
+if (file_exists($pageThemePath)) {
+    $classNameString = str_replace(' ', '', ucwords(str_replace(['_', '-'], ' ', $themeFolderName)));
+
+    $contents = file_get_contents($pageThemePath);
+    if (!$contents) {
+        fwrite(STDERR, "Unable to open file to rename theme class reference, please try manually: {$pageThemePath}\n");
+    } else {
+        $contents = str_replace('{{THEME_CLASS}}', (string) $classNameString, $contents);
+
+        if (!file_put_contents($pageThemePath, $contents)) {
+            fwrite(STDERR, "Unable to write updated file contents, please try manually: {$pageThemePath}\n");
+        }
+    }
+}
+
+echo "Creating frontend system pages..." . PHP_EOL;
+
+$frontendFolder = $packageDirectory . '/resources/_system';
+$frontendIterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($frontendFolder, FilesystemIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::SELF_FIRST
+);
+
+$frontendDestinationFolder = $projectRoot . '/public/application/views';
+if (!is_dir($frontendDestinationFolder) && !mkdir($frontendDestinationFolder, 0755, true)) {
+    fwrite(STDERR, "Unable to create: {$frontendDestinationFolder}\n");
+    exit(1);
+}
+
+foreach ($frontendIterator as $item) {
+    $relativePath = substr($item->getPathname(), strlen($frontendFolder) + 1);
+    $destination = $frontendDestinationFolder . '/' . $relativePath;
+
+    if ($item->isDir()) {
+        if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+            fwrite(STDERR, "Unable to create: {$relativePath}\n");
+            exit(1);
+        }
+    } elseif (file_exists($destination)) {
+        echo "{$relativePath} exists -- (ignored)\n";
+        continue;
+    } elseif (!copy($item->getPathname(), $destination)) {
+        fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+        exit(1);
+    }
+}
+
+echo "System pages added to {$frontendDestinationFolder}..." . PHP_EOL;
+
+$paths = [
+    '/page_not_found' => $themeFolderName,
+    '/page_forbidden' => $themeFolderName,
+    '/frontend/maintenance_mode' => $themeFolderName
+];
+
+echo "Updating application config to use them paths for system pages..." . PHP_EOL;
+
+$configDirectory = $projectRoot . '/public/application/config';
+if (!is_dir($configDirectory)) {
+    fwrite(STDERR, "Config directory missing: {$configDirectory}\n");
+    exit(1);
+}
+
+$configFile = $configDirectory . '/app.php';
+$config = is_file($configFile) ? require $configFile : [];
+
+if (!is_array($config)) {
+    fwrite(STDERR, "Invalid config file: {$configFile}\n");
+    exit(1);
+}
+
+$currentThemePaths = $config['theme_paths'] ?? [];
+if (!is_array($currentThemePaths)) {
+    fwrite(STDERR, "Invalid app.theme_paths config in {$configFile}\n");
+    exit(1);
+}
+
+$config['theme_paths'] = array_replace($currentThemePaths, $paths);
+$configContents = "<?php\n\nreturn " . var_export($config, true) . ";\n";
+
+if (file_put_contents($configFile, $configContents, LOCK_EX) === false) {
+    fwrite(STDERR, "Unable to write config file: {$configFile}\n");
+    exit(1);
+}
+
+echo "Application config updated" . PHP_EOL;
+echo "ThemeKit resources installed" . PHP_EOL;
+echo "Theme structure created in /public/application/themes/" . $themeFolderName . PHP_EOL;
+echo "Source files created in /src/themes/" . $themeFolderName . PHP_EOL;
