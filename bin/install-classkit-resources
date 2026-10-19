@@ -87,8 +87,6 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
             if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
                 fwrite(STDERR, "Unable to create: {$relativePath}\n");
                 exit(1);
-            } else {
-                rmdir($destination);
             }
         } elseif (file_exists($destination)) {
             echo "{$relativePath} exists -- (ignored)\n";
@@ -96,8 +94,14 @@ if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
         } elseif (!copy($item->getPathname(), $destination)) {
             fwrite(STDERR, "Unable to copy: {$relativePath}\n");
             exit(1);
-        } else {
-            unlink($item->getPathname());
+        }
+    }
+
+    foreach ($tsIterator as $item) {
+        $pathname = $item->getPathname();
+        $removed = $item->isDir() ? rmdir($pathname) : unlink($pathname);
+        if (!$removed) {
+            fwrite(STDERR, "Unable to remove: {$pathname}\n");
         }
     }
 }
