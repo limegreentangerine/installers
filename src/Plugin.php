@@ -21,7 +21,16 @@ class Plugin implements PluginInterface
     private function runClassKitResources(): void
     {
         $this->runVendorCommand('classkit-resources', Action::Install);
+    }
+
+    public function runToolkitResources(): void
+    {
         $this->runVendorCommand('toolkit-resources', Action::Install);
+    }
+
+    public function runThemekitResources(): void
+    {
+        $this->runVendorCommand('themekit-resources', Action::Install);
     }
 
     private function runRemoveClassKitResources(): void
@@ -105,6 +114,18 @@ class Plugin implements PluginInterface
         }
 
         $this->runClassKitResources();
+
+        if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/lgt_toolkit') {
+            return;
+        }
+
+        $this->runToolkitResources();
+
+        // if ($event->getOperation()->getPackage()->getName() !== 'limegreentangerine/theme_kit') {
+        //     return;
+        // }
+
+        // $this->runThemekitResources();
     }
 
     public function onPrePackageUninstall(PackageEvent $event): void
@@ -118,7 +139,7 @@ class Plugin implements PluginInterface
         }
 
         $this->resourcesUninstalled = true;
-        $this->runVendorCommand('classkit-resources', Action::Uninstall);
+        $this->runRemoveClassKitResources();
     }
 
     public function onPostUpdate(ScriptEvent $event): void
