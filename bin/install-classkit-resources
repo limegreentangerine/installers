@@ -57,6 +57,10 @@ foreach ($filesToInstall as $fti) {
         if (!copy($source, $destination)) {
             fwrite(STDERR, "Unable to copy: {$source}\n");
         }
+
+        if ($fti === 'svelte-components.json') {
+            chmod($destination, 755);
+        }
     } else {
         echo "{$destination} exists -- (ignored)\n";
     }
