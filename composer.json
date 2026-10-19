@@ -33,7 +33,8 @@
 	"bin": [
 		"bin/install-classkit-resources",
 		"bin/install-toolkit-resources",
-		"bin/uninstall-classkit-resources"
+		"bin/uninstall-classkit-resources",
+		"bin/install-toolkit-resources"
 	],
     "extra": {
         "class": "Limegreentangerine\\Installers\\Plugin"

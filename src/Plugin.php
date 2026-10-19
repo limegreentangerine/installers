@@ -109,6 +109,7 @@ class Plugin implements PluginInterface
 
     public function onPostPackageInstall(PackageEvent $event): void
     {
+        var_dump($event->getOperation()->getPackage()->getName());
         $pkgArr = [
             'limegreentangerine/class_kit',
             'limegreentangerine/lgt_toolkit',
@@ -116,6 +117,7 @@ class Plugin implements PluginInterface
         ];
 
         if (!in_array($event->getOperation()->getPackage()->getName(), $pkgArr)) {
+            var_dump('NOT IN ARRAY');
             return;
         }
 
