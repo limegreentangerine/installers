@@ -21,6 +21,7 @@ class Plugin implements PluginInterface
     private function runClassKitResources(): void
     {
         $this->runVendorCommand('classkit-resources', Action::Install);
+        $this->runVendorCommand('toolkit-resources', Action::Install);
     }
 
     private function runRemoveClassKitResources(): void
