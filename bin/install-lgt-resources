@@ -3,6 +3,13 @@
 
 declare(strict_types=1);
 
+#
+#
+# CLASSKIT
+#
+#
+
+
 echo "Installing ClassKit resources..." . PHP_EOL;
 
 $projectRoot = getcwd();
@@ -150,6 +157,12 @@ if ($exitCode !== 0) {
 
 echo 'ClassKit package installed to Concrete' . PHP_EOL;
 
+#
+#
+# LGT TOOLKIT
+#
+#
+
 echo "Installing LGT Toolkit resources..." . PHP_EOL;
 
 $filename = '.htaccess';
@@ -208,6 +221,12 @@ if ($exitCode !== 0) {
 }
 
 echo 'LGT Toolkit installed to Concrete' . PHP_EOL;
+
+#
+#
+# THEMEKIT
+#
+#
 
 echo "Installing ThemeKit resources..." . PHP_EOL;
 
