@@ -186,7 +186,6 @@ echo "LGT Toolkit resources installed" . PHP_EOL;
 echo "Installing ThemeKit resources..." . PHP_EOL;
 
 $projectRoot = getcwd();
-$packageDirectory = dirname(__DIR__);
 
 do {
     echo 'Theme handle: ';
@@ -202,6 +201,7 @@ $commands = [
     [
         'npm',
         'install',
+        '--loglevel=error',
         '--save-dev',
         'typescript',
         'ts-loader',
@@ -211,6 +211,7 @@ $commands = [
     [
         'npm',
         'install',
+        '--loglevel=error',
         '--save',
         'bootstrap@^5.0.0',
         '@popperjs/core',
@@ -240,7 +241,8 @@ foreach ($commands as $command) {
 
 echo "Creating folders for src files..." . PHP_EOL;
 
-$rootResources = $packageDirectory . '/resources/root';
+$resourceRoot = $projectRoot . DIRECTORY_SEPARATOR . 'vendor/limegreentangerine/theme_kit';
+$rootResources = $resourceRoot . '/resources/root';
 foreach (new DirectoryIterator($rootResources) as $file) {
     if ($file->isFile()) {
         $sourceFile = $rootResources . '/' . $file->getFilename();
@@ -275,7 +277,7 @@ if (!is_dir($srcRoot) && !mkdir($srcRoot, 0755, true)) {
 echo "Creating /src/scss file structure..." . PHP_EOL;
 
 // define scss folder and iterator, then process
-$scssFolder = $packageDirectory . '/resources/scss';
+$scssFolder = $resourceRoot . '/resources/scss';
 $scssIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($scssFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -316,7 +318,7 @@ foreach ($scssIterator as $item) {
 echo "Creating /src/ts file structure..." . PHP_EOL;
 
 // define ts folder and iterator, then process
-$tsFolder = $packageDirectory . '/resources/ts';
+$tsFolder = $resourceRoot . '/resources/ts';
 $tsIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -350,7 +352,7 @@ if (!is_dir($skeletonDestinationFolder) && !mkdir($skeletonDestinationFolder, 07
 
 echo "Creating theme skeleton in destination folder..." . PHP_EOL;
 
-$skeletonFolder = $packageDirectory . '/resources/_skeleton';
+$skeletonFolder = $resourceRoot . '/resources/_skeleton';
 $skeletonIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($skeletonFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -394,7 +396,7 @@ if (file_exists($pageThemePath)) {
 
 echo "Creating frontend system pages..." . PHP_EOL;
 
-$frontendFolder = $packageDirectory . '/resources/_system';
+$frontendFolder = $resourceRoot . '/resources/_system';
 $frontendIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($frontendFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -494,7 +496,7 @@ if (!is_resource($process)) {
 
 $exitCode = proc_close($process);
 if ($exitCode !== 0) {
-    exit($exitCode);
+    fwrite(STDERR, "Unable to install ClassKit package to Concrete (exit code {$exitCode}); continuing.\n");
 }
 
 echo "Installing LGT Toolkit package to Concrete..." . PHP_EOL;
@@ -518,5 +520,5 @@ if (!is_resource($process)) {
 
 $exitCode = proc_close($process);
 if ($exitCode !== 0) {
-    exit($exitCode);
+    fwrite(STDERR, "Unable to install LGT Toolkit package to Concrete (exit code {$exitCode}); continuing.\n");
 }
