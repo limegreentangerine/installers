@@ -10,14 +10,14 @@ commands for installing their project-level resources.
 ## Requirements
 
 - PHP 8.4 or later
-- Composer 2
+- Composer 2.2 or later
 - Concrete CMS 9.5 or later
 - Node.js and npm when installing ClassKit or ThemeKit frontend dependencies
 
 ## Install in a Concrete CMS project
 
-Composer 2 requires explicit permission to load plugins. Add this to the
-consuming project's root `composer.json` before requiring this package:
+Composer 2.2 and later require explicit permission to load plugins. Add this to
+the consuming project's root `composer.json` before requiring this package:
 
 ```json
 {
@@ -54,10 +54,11 @@ php vendor/bin/uninstall-lgt-resources
 ```
 
 `install-lgt-resources` installs the ClassKit and ThemeKit frontend dependencies
-with npm, creates the Concrete CMS rewrite file, scaffolds a ThemeKit theme, and
-attempts to install the ClassKit and LGT Toolkit packages in Concrete CMS. Node.js
-and npm must be available on `PATH`. The command prompts for a theme handle
-(letters, numbers, hyphens, and underscores).
+with npm, creates `public/.htaccess` if it does not already exist, scaffolds a
+ThemeKit theme, and attempts to install the ClassKit and LGT Toolkit packages in
+Concrete CMS. The project must have a `public/` directory. Node.js and npm must
+be available on `PATH`. The command prompts for a theme handle (letters,
+numbers, hyphens, and underscores).
 
 The theme is created under `public/application/themes/<handle>`, with Sass and
 TypeScript source folders under `src/themes/<handle>`. The installer also copies
@@ -67,9 +68,10 @@ paths in `public/application/config/app.php`. Existing files in the theme and
 source folders are kept; back up any existing root build configuration files
 before running the command.
 
-If `public/.htaccess` already exists, the installer leaves it unchanged and
-stops after the ClassKit resource setup. To run the remaining setup stages,
-ensure that file does not exist before running the installer.
+If `public/.htaccess` already exists when the installer reaches that step, it
+leaves the file unchanged and exits successfully. The ThemeKit setup and Concrete
+package installation steps are therefore skipped. If the file does not exist,
+the installer creates it and continues with those steps.
 
 Failures to install the ClassKit or LGT Toolkit Concrete packages are printed
 to STDERR, but do not stop the installer from attempting the next package.
@@ -79,9 +81,11 @@ The plugin runs `install-lgt-resources` when ClassKit, LGT Toolkit, or ThemeKit
 is installed and after Composer updates. These automatic runs use the same
 interactive installer and may prompt for a theme handle.
 
-`uninstall-lgt-resources` removes ClassKit frontend dependencies and generated
-ClassKit TypeScript/configuration resources. It does not uninstall the Concrete
-CMS packages or remove ThemeKit resources.
+`uninstall-lgt-resources` uninstalls the ClassKit npm development dependencies,
+removes the root `svelte-components.json`, `tsconfig.json`, `svelte.config.js`,
+and `svelte.d.ts` files if present, and recursively deletes `resources/ts`.
+Back up any files in that directory that you want to keep. The command does not
+uninstall the Concrete CMS packages or remove ThemeKit resources.
 
 ## Included packages
 
