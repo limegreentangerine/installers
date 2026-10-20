@@ -29,7 +29,7 @@ final class PackageBehaviorTest extends TestCase
         if (!is_dir($vendorDirectory . '/bin')) {
             mkdir($vendorDirectory . '/bin', 0755, true);
         }
-        foreach (['classkit-resources', 'uninstall-classkit-resources'] as $binary) {
+        foreach (['install-lgt-resources', 'uninstall-lgt-resources'] as $binary) {
             file_put_contents($vendorDirectory . '/bin/' . $binary, "<?php\n" . $commandBody);
         }
 
@@ -61,6 +61,25 @@ final class PackageBehaviorTest extends TestCase
         chmod($script, 0755);
 
         return ['directory' => $directory, 'log' => $log];
+    }
+
+    private function createConcreteStub(string $project): string
+    {
+        $directory = $project . '/vendor/bin';
+        mkdir($directory, 0755, true);
+        $script = $directory . '/concrete';
+        file_put_contents(
+            $script,
+            "#!/bin/sh\n"
+            . "printf '%s\\n' \"\$*\" >> \"\$INSTALLERS_CONCRETE_LOG\"\n"
+            . "case \"\$2\" in\n"
+            . "    class_kit) exit \"\${INSTALLERS_CLASSKIT_EXIT:-0}\" ;;\n"
+            . "    lgt_toolkit) exit \"\${INSTALLERS_TOOLKIT_EXIT:-0}\" ;;\n"
+            . "esac\n",
+        );
+        chmod($script, 0755);
+
+        return $this->temporaryDirectory . '/concrete.log';
     }
 
     private function runScript(string $script, string $workingDirectory, string $input = '', array $environment = []): array
@@ -100,54 +119,14 @@ final class PackageBehaviorTest extends TestCase
         rmdir($directory);
     }
 
-    public function testToolkitResourcesCreatesHtaccessAndLeavesExistingFileUntouched(): void
-    {
-        $project = $this->temporaryDirectory . '/project';
-        mkdir($project . '/public', 0755, true);
-
-        $result = $this->runScript(__DIR__ . '/../bin/toolkit-resources', $project);
-
-        self::assertSame(0, $result['exitCode'], $result['stderr']);
-        $htaccess = $project . '/public/.htaccess';
-        self::assertFileExists($htaccess);
-        self::assertStringContainsString('RewriteRule . index.php [L]', file_get_contents($htaccess));
-
-        file_put_contents($htaccess, 'custom rules');
-        $result = $this->runScript(__DIR__ . '/../bin/toolkit-resources', $project);
-
-        self::assertSame(0, $result['exitCode'], $result['stderr']);
-        self::assertSame('custom rules', file_get_contents($htaccess));
-        self::assertStringContainsString('Skipped (already exists)', $result['stdout']);
-    }
-
-    public function testClassKitResourcesRunsBothNpmInstallCommandsInProjectRoot(): void
+    public function testInstallLgtResourcesPropagatesNpmFailureAndStops(): void
     {
         $project = $this->temporaryDirectory . '/project';
         mkdir($project);
         $npm = $this->createNpmStub();
 
         $result = $this->runScript(
-            __DIR__ . '/../bin/classkit-resources',
-            $project,
-            '',
-            ['PATH' => $npm['directory'] . ':' . (getenv('PATH') ?: ''), 'INSTALLERS_NPM_LOG' => $npm['log']],
-        );
-
-        self::assertSame(0, $result['exitCode'], $result['stderr']);
-        self::assertSame([
-            realpath($project) . "\tinstall --save-dev typescript ts-loader @types/node svelte svelte-loader",
-            realpath($project) . "\tinstall --save bootstrap bootstrap-icons @popperjs/core @types/bootstrap",
-        ], file($npm['log'], FILE_IGNORE_NEW_LINES));
-    }
-
-    public function testClassKitResourcesPropagatesNpmFailureAndStops(): void
-    {
-        $project = $this->temporaryDirectory . '/project';
-        mkdir($project);
-        $npm = $this->createNpmStub();
-
-        $result = $this->runScript(
-            __DIR__ . '/../bin/classkit-resources',
+            __DIR__ . '/../bin/install-lgt-resources',
             $project,
             '',
             [
@@ -161,16 +140,82 @@ final class PackageBehaviorTest extends TestCase
         self::assertCount(1, file($npm['log'], FILE_IGNORE_NEW_LINES));
     }
 
-    public function testUninstallClassKitResourcesRunsNpmUninstall(): void
+    public function testInstallLgtResourcesInstallsResourcesAndContinuesAfterConcreteFailures(): void
+    {
+        $project = $this->temporaryDirectory . '/project';
+        mkdir($project . '/public/application/config', 0755, true);
+        $resourceRoot = $project . '/vendor/limegreentangerine/theme_kit/resources';
+        foreach (['root', 'scss', 'ts', '_skeleton', '_system'] as $directory) {
+            mkdir($resourceRoot . '/' . $directory, 0755, true);
+        }
+
+        $npm = $this->createNpmStub();
+        $concreteLog = $this->createConcreteStub($project);
+        $result = $this->runScript(
+            __DIR__ . '/../bin/install-lgt-resources',
+            $project,
+            "test_theme\n",
+            [
+                'PATH' => $npm['directory'] . ':' . (getenv('PATH') ?: ''),
+                'INSTALLERS_NPM_LOG' => $npm['log'],
+                'INSTALLERS_CONCRETE_LOG' => $concreteLog,
+                'INSTALLERS_CLASSKIT_EXIT' => '11',
+                'INSTALLERS_TOOLKIT_EXIT' => '17',
+            ],
+        );
+
+        self::assertSame(0, $result['exitCode'], $result['stderr']);
+        self::assertSame([
+            realpath($project) . "\tinstall --loglevel=error --save-dev typescript@^6.0.3 ts-loader @types/node svelte svelte-loader svelte-preprocess webpack@~5.99.0 resolve-url-loader sass sass-loader",
+            realpath($project) . "\tinstall --loglevel=error --save-dev typescript ts-loader @types/node @types/bootstrap",
+            realpath($project) . "\tinstall --loglevel=error --save bootstrap@^5.0.0 @popperjs/core bootstrap-icons",
+        ], file($npm['log'], FILE_IGNORE_NEW_LINES));
+        self::assertSame([
+            'c5:package:install class_kit',
+            'c5:package:install lgt_toolkit',
+        ], file($concreteLog, FILE_IGNORE_NEW_LINES));
+        self::assertStringContainsString(
+            'Unable to install ClassKit package to Concrete (exit code 11); continuing.',
+            $result['stderr'],
+        );
+        self::assertStringContainsString(
+            'Unable to install LGT Toolkit package to Concrete (exit code 17); continuing.',
+            $result['stderr'],
+        );
+        $htaccess = $project . '/public/.htaccess';
+        self::assertFileExists($htaccess);
+        self::assertStringContainsString('RewriteRule . index.php [L]', file_get_contents($htaccess));
+
+        file_put_contents($htaccess, 'custom rules');
+        $result = $this->runScript(
+            __DIR__ . '/../bin/install-lgt-resources',
+            $project,
+            '',
+            [
+                'PATH' => $npm['directory'] . ':' . (getenv('PATH') ?: ''),
+                'INSTALLERS_NPM_LOG' => $npm['log'],
+                'INSTALLERS_CONCRETE_LOG' => $concreteLog,
+                'INSTALLERS_CLASSKIT_EXIT' => '11',
+                'INSTALLERS_TOOLKIT_EXIT' => '17',
+            ],
+        );
+
+        self::assertSame(0, $result['exitCode'], $result['stderr']);
+        self::assertSame('custom rules', file_get_contents($htaccess));
+        self::assertStringContainsString('Skipped (already exists)', $result['stdout']);
+    }
+
+    public function testUninstallLgtResourcesRunsNpmUninstallAndRemovesResources(): void
     {
         $project = $this->temporaryDirectory . '/project';
         mkdir($project);
         mkdir($project . '/resources/ts/nested/deep', 0755, true);
         file_put_contents($project . '/resources/ts/nested/deep/component.ts', 'export {};');
+        file_put_contents($project . '/svelte-components.json', '{}');
         $npm = $this->createNpmStub();
 
         $result = $this->runScript(
-            __DIR__ . '/../bin/uninstall-classkit-resources',
+            __DIR__ . '/../bin/uninstall-lgt-resources',
             $project,
             '',
             ['PATH' => $npm['directory'] . ':' . (getenv('PATH') ?: ''), 'INSTALLERS_NPM_LOG' => $npm['log']],
@@ -178,8 +223,9 @@ final class PackageBehaviorTest extends TestCase
 
         self::assertSame(0, $result['exitCode'], $result['stderr']);
         self::assertDirectoryDoesNotExist($project . '/resources/ts');
+        self::assertFileDoesNotExist($project . '/svelte-components.json');
         self::assertSame([
-            realpath($project) . "\tuninstall --save-dev typescript ts-loader @types/node svelte svelte-loader",
+            realpath($project) . "\tuninstall --loglevel=error --save-dev typescript ts-loader @types/node svelte svelte-loader svelte-preprocess resolve-url-loader sass sass-loader",
         ], file($npm['log'], FILE_IGNORE_NEW_LINES));
     }
 
@@ -203,7 +249,7 @@ final class PackageBehaviorTest extends TestCase
         self::assertCount(0, $dispatcher->getListeners(ScriptEvents::POST_UPDATE_CMD));
     }
 
-    public function testPluginRunsClassKitCommandForItsInstallAndPostUpdateEvents(): void
+    public function testPluginRunsInstallerForItsInstallAndPostUpdateEvents(): void
     {
         $plugin = $this->createPlugin();
 
@@ -214,7 +260,7 @@ final class PackageBehaviorTest extends TestCase
         $plugin->onPostUpdate(new ScriptEvent());
 
         self::assertSame(
-            "classkit-resources\nclasskit-resources\n",
+            "install-lgt-resources\ninstall-lgt-resources\n",
             file_get_contents($this->temporaryDirectory . '/vendor/calls.log'),
         );
     }
@@ -228,7 +274,7 @@ final class PackageBehaviorTest extends TestCase
         $plugin->onPrePackageUninstall($this->packageEvent('another/package'));
 
         self::assertSame(
-            "uninstall-classkit-resources\n",
+            "uninstall-lgt-resources\n",
             file_get_contents($this->temporaryDirectory . '/vendor/calls.log'),
         );
 
@@ -236,7 +282,7 @@ final class PackageBehaviorTest extends TestCase
         $anotherPlugin->onPrePackageUninstall($this->packageEvent('limegreentangerine/class_kit'));
 
         self::assertSame(
-            "uninstall-classkit-resources\nuninstall-classkit-resources\n",
+            "uninstall-lgt-resources\nuninstall-lgt-resources\n",
             file_get_contents($this->temporaryDirectory . '/vendor/calls.log'),
         );
     }
@@ -246,7 +292,7 @@ final class PackageBehaviorTest extends TestCase
         $plugin = $this->createPlugin("exit(9);\n");
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Command "classkit-resources" failed with exit code 9.');
+        $this->expectExceptionMessage('Command "install-lgt-resources" failed with exit code 9.');
 
         $plugin->onPostUpdate(new ScriptEvent());
     }
