@@ -45,33 +45,43 @@ installs these dependencies automatically.
 
 ## Project resources
 
-The package provides three Composer binaries. Run them from the consuming
-project's root when you need to provision the corresponding resources:
+The package provides two Composer binaries. Run them from the consuming
+project's root:
 
 ```sh
-php vendor/bin/classkit-resources
-php vendor/bin/toolkit-resources
-php vendor/bin/themekit-resources
+php vendor/bin/install-lgt-resources
+php vendor/bin/uninstall-lgt-resources
 ```
 
-When `limegreentangerine/class_kit` is installed, the plugin runs
-`classkit-resources` and installs the Concrete package automatically. After a
-Composer update, it runs `classkit-resources` and updates the Concrete package.
+`install-lgt-resources` installs the ClassKit and ThemeKit frontend dependencies
+with npm, creates the Concrete CMS rewrite file, scaffolds a ThemeKit theme, and
+attempts to install the ClassKit and LGT Toolkit packages in Concrete CMS. Node.js
+and npm must be available on `PATH`. The command prompts for a theme handle
+(letters, numbers, hyphens, and underscores).
 
-- `classkit-resources` installs TypeScript, Svelte, and loader development
-  dependencies with npm. Node.js and npm must be available on `PATH`.
-- `toolkit-resources` creates `public/.htaccess` with Concrete CMS rewrite
-  rules if that file does not already exist. The project must have a `public/`
-  directory, and an existing `.htaccess` is left unchanged.
-- `themekit-resources` prompts for a theme handle (letters, numbers, hyphens,
-  and underscores), installs the theme's npm dependencies, and scaffolds its
-  Concrete CMS theme under `public/application/themes/<handle>`. It also
-  creates Sass and TypeScript source folders under `src/themes/<handle>`,
-  copies frontend build configuration files to the directory above the project
-  root, adds system page views under `public/application/views`, and configures
-  the theme paths in `public/application/config/app.php`. Existing files in
-  the theme and source folders are kept; back up any existing root build
-  configuration files before running the command.
+The theme is created under `public/application/themes/<handle>`, with Sass and
+TypeScript source folders under `src/themes/<handle>`. The installer also copies
+frontend build configuration files to the directory above the project root,
+adds system page views under `public/application/views`, and configures theme
+paths in `public/application/config/app.php`. Existing files in the theme and
+source folders are kept; back up any existing root build configuration files
+before running the command.
+
+If `public/.htaccess` already exists, the installer leaves it unchanged and
+stops after the ClassKit resource setup. To run the remaining setup stages,
+ensure that file does not exist before running the installer.
+
+Failures to install the ClassKit or LGT Toolkit Concrete packages are printed
+to STDERR, but do not stop the installer from attempting the next package.
+Failures in other setup steps, including npm installation, can stop the command.
+
+The plugin runs `install-lgt-resources` when ClassKit, LGT Toolkit, or ThemeKit
+is installed and after Composer updates. These automatic runs use the same
+interactive installer and may prompt for a theme handle.
+
+`uninstall-lgt-resources` removes ClassKit frontend dependencies and generated
+ClassKit TypeScript/configuration resources. It does not uninstall the Concrete
+CMS packages or remove ThemeKit resources.
 
 ## Included packages
 
