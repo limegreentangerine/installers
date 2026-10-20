@@ -3,10 +3,189 @@
 
 declare(strict_types=1);
 
+#
+#
+# CLASSKIT
+#
+#
+
+
+echo "Installing ClassKit resources..." . PHP_EOL;
+
+$projectRoot = getcwd();
+
+// install required npm packages
+$commands = [
+    [
+        'npm',
+        'install',
+        '--loglevel=error',
+        '--save-dev',
+        'typescript@^6.0.3',
+        'ts-loader',
+        '@types/node',
+        'svelte',
+        'svelte-loader',
+        'svelte-preprocess',
+        'webpack@~5.99.0',
+        'resolve-url-loader',
+        'sass',
+        'sass-loader',
+    ]
+];
+
+echo "Installing npm packages..." . PHP_EOL;
+
+foreach ($commands as $command) {
+    $process = proc_open(
+        $command,
+        [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+        $pipes,
+        $projectRoot
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Unable to start npm.');
+    }
+
+    $exitCode = proc_close($process);
+    if ($exitCode !== 0) {
+        exit($exitCode);
+    }
+}
+
+$resourcesFolder = '.' . DIRECTORY_SEPARATOR . 'public/packages/class_kit/resources';
+$filesToInstall = [
+    'svelte-components.json',
+    'tsconfig.json',
+    'svelte.config.js',
+    'svelte.d.ts'
+];
+
+foreach ($filesToInstall as $fti) {
+    $source = $resourcesFolder . DIRECTORY_SEPARATOR . $fti;
+    $destination = './' . $fti;
+
+    if (file_exists($source) && !file_exists($destination)) {
+        if (!copy($source, $destination)) {
+            fwrite(STDERR, "Unable to copy: {$source}\n");
+        } else {
+            unlink($source);
+        }
+    } else {
+        echo "{$destination} exists -- (ignored)\n";
+    }
+}
+
+function rrmdir(string $dir)
+{
+    if (is_dir($dir)) {
+        $objects = scandir($dir);
+        foreach ($objects as $object) {
+            if ($object != "." && $object != "..") {
+                if (is_dir($dir . DIRECTORY_SEPARATOR . $object) && !is_link($dir . "/" . $object)) {
+                    rrmdir($dir . DIRECTORY_SEPARATOR . $object);
+                } else {
+                    try {
+                        unlink($dir . DIRECTORY_SEPARATOR . $object);
+                    } catch (Exception $e) {
+                        echo $e->getMessage();
+                        continue;
+                    }
+                }
+            }
+        }
+
+        rmdir($dir);
+    }
+}
+
+$tsDestinationFolder = './resources/ts';
+if (!is_dir($tsDestinationFolder) && !mkdir($tsDestinationFolder, 0755, true)) {
+    fwrite(STDERR, "Unable to create: {$tsDestinationFolder}\n");
+} else {
+    $tsFolder = $resourcesFolder . DIRECTORY_SEPARATOR . 'ts';
+
+    if (file_exists($tsFolder)) {
+        $tsIterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($tsIterator as $item) {
+            $relativePath = substr($item->getPathname(), strlen($tsFolder) + 1);
+            $destination = $tsDestinationFolder . '/' . $relativePath;
+
+            if ($item->isDir()) {
+                if (!is_dir($destination) && !mkdir($destination, 0755, true)) {
+                    fwrite(STDERR, "Unable to create: {$relativePath}\n");
+                    exit(1);
+                }
+            } elseif (file_exists($destination)) {
+                echo "{$relativePath} exists -- (ignored)\n";
+                continue;
+            } elseif (!copy($item->getPathname(), $destination)) {
+                fwrite(STDERR, "Unable to copy: {$relativePath}\n");
+                exit(1);
+            }
+        }
+
+        rrmdir($tsFolder);
+    }
+}
+
+echo "ClassKit resources installed" . PHP_EOL;
+
+#
+#
+# LGT TOOLKIT
+#
+#
+
+echo "Installing LGT Toolkit resources..." . PHP_EOL;
+
+$filename = '.htaccess';
+$destination = '.' . DIRECTORY_SEPARATOR  . 'public' . DIRECTORY_SEPARATOR . $filename;
+
+echo "Creating .htaccess..." . PHP_EOL;
+
+if (file_exists($destination)) {
+    echo "Skipped (already exists): " . basename($filename) . PHP_EOL;
+    exit(0);
+} else {
+	$contents = <<<'HTACCESS'
+	# -- concrete urls start --
+	<IfModule mod_rewrite.c>
+		RewriteEngine On
+		RewriteBase /
+		RewriteCond %{REQUEST_FILENAME} !-f
+		RewriteCond %{REQUEST_FILENAME}/index.html !-f
+		RewriteCond %{REQUEST_FILENAME}/index.php !-f
+		RewriteRule . index.php [L]
+	</IfModule>
+	# -- concrete urls end --
+	HTACCESS;
+
+	if (file_put_contents($destination, $contents) === false) {
+		fwrite(STDERR, "Failed to create: " . basename($filename) . PHP_EOL);
+		exit(1);
+	}
+
+	echo ".htaccess created" . PHP_EOL;
+}
+
+
+echo "LGT Toolkit resources installed" . PHP_EOL;
+
+#
+#
+# THEMEKIT
+#
+#
+
 echo "Installing ThemeKit resources..." . PHP_EOL;
 
 $projectRoot = getcwd();
-$packageDirectory = dirname(__DIR__);
 
 do {
     echo 'Theme handle: ';
@@ -22,16 +201,17 @@ $commands = [
     [
         'npm',
         'install',
+        '--loglevel=error',
         '--save-dev',
         'typescript',
         'ts-loader',
         '@types/node',
-        '@types/bootstrap',
-        'webpack@5.98.0' // TODO: 'webpack@5.98.0' bug fix for default mix in concrete builder needs checking on a new install
+        '@types/bootstrap'
     ],
     [
         'npm',
         'install',
+        '--loglevel=error',
         '--save',
         'bootstrap@^5.0.0',
         '@popperjs/core',
@@ -61,7 +241,8 @@ foreach ($commands as $command) {
 
 echo "Creating folders for src files..." . PHP_EOL;
 
-$rootResources = $packageDirectory . '/resources/root';
+$resourceRoot = $projectRoot . DIRECTORY_SEPARATOR . 'vendor/limegreentangerine/theme_kit';
+$rootResources = $resourceRoot . '/resources/root';
 foreach (new DirectoryIterator($rootResources) as $file) {
     if ($file->isFile()) {
         $sourceFile = $rootResources . '/' . $file->getFilename();
@@ -96,7 +277,7 @@ if (!is_dir($srcRoot) && !mkdir($srcRoot, 0755, true)) {
 echo "Creating /src/scss file structure..." . PHP_EOL;
 
 // define scss folder and iterator, then process
-$scssFolder = $packageDirectory . '/resources/scss';
+$scssFolder = $resourceRoot . '/resources/scss';
 $scssIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($scssFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -137,7 +318,7 @@ foreach ($scssIterator as $item) {
 echo "Creating /src/ts file structure..." . PHP_EOL;
 
 // define ts folder and iterator, then process
-$tsFolder = $packageDirectory . '/resources/ts';
+$tsFolder = $resourceRoot . '/resources/ts';
 $tsIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($tsFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -171,7 +352,7 @@ if (!is_dir($skeletonDestinationFolder) && !mkdir($skeletonDestinationFolder, 07
 
 echo "Creating theme skeleton in destination folder..." . PHP_EOL;
 
-$skeletonFolder = $packageDirectory . '/resources/_skeleton';
+$skeletonFolder = $resourceRoot . '/resources/_skeleton';
 $skeletonIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($skeletonFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -215,7 +396,7 @@ if (file_exists($pageThemePath)) {
 
 echo "Creating frontend system pages..." . PHP_EOL;
 
-$frontendFolder = $packageDirectory . '/resources/_system';
+$frontendFolder = $resourceRoot . '/resources/_system';
 $frontendIterator = new RecursiveIteratorIterator(
     new RecursiveDirectoryIterator($frontendFolder, FilesystemIterator::SKIP_DOTS),
     RecursiveIteratorIterator::SELF_FIRST
@@ -287,3 +468,57 @@ echo "Application config updated" . PHP_EOL;
 echo "ThemeKit resources installed" . PHP_EOL;
 echo "Theme structure created in /public/application/themes/" . $themeFolderName . PHP_EOL;
 echo "Source files created in /src/themes/" . $themeFolderName . PHP_EOL;
+
+#
+#
+# Running CONCRETE INSTALLS
+#
+#
+
+echo "Installing ClassKit package to Concrete..." . PHP_EOL;
+
+$command = [
+    './vendor/bin/concrete',
+    'c5:package:install',
+    'class_kit'
+];
+
+$process = proc_open(
+    $command,
+    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+    $pipes,
+    $projectRoot
+);
+
+if (!is_resource($process)) {
+    throw new RuntimeException('Unable to run c5 command.');
+}
+
+$exitCode = proc_close($process);
+if ($exitCode !== 0) {
+    fwrite(STDERR, "Unable to install ClassKit package to Concrete (exit code {$exitCode}); continuing.\n");
+}
+
+echo "Installing LGT Toolkit package to Concrete..." . PHP_EOL;
+
+$command = [
+    './vendor/bin/concrete',
+    'c5:package:install',
+    'lgt_toolkit'
+];
+
+$process = proc_open(
+    $command,
+    [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+    $pipes,
+    $projectRoot
+);
+
+if (!is_resource($process)) {
+    throw new RuntimeException('Unable to run c5 command.');
+}
+
+$exitCode = proc_close($process);
+if ($exitCode !== 0) {
+    fwrite(STDERR, "Unable to install LGT Toolkit package to Concrete (exit code {$exitCode}); continuing.\n");
+}

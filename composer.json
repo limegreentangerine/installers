@@ -2,6 +2,8 @@
     "name": "limegreentangerine/installers",
     "description": "Installer package for configuring new concrete CMS sites",
     "type": "composer-plugin",
+    "prefer-stable": true,
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Limegreentangerine\\Installers\\": "src/"
@@ -15,30 +17,23 @@
     ],
     "require": {
         "composer-plugin-api": "^2.0",
-        "limegreentangerine/class_kit": "^1.0",
-        "limegreentangerine/lgt_toolkit": "^0.0.11",
+        "limegreentangerine/class_kit": "^2.0",
+        "limegreentangerine/lgt_toolkit": "^1.0",
         "limegreentangerine/theme_kit": "^1.0"
     },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpunit/phpunit": "^13.4"
+    },
     "scripts": {
-        "post-package-install": [
-			"@php ./vendor/bin/classkit-resources",
-			"@php ./vendor/bin/toolkit-resources",
-			"@php ./vendor/bin/themekit-resources",
-            "@php ./vendor/bin/concrete c5:package:install class_kit",
-            "@php ./vendor/bin/concrete c5:package:install lgt_toolkit"
-		],
-		"post-update-cmd": [
-			"@php ./vendor/bin/classkit-resources",
-			"@php ./vendor/bin/toolkit-resources",
-            "@php ./vendor/bin/themekit-resources",
-            "@php ./vendor/bin/concrete c5:package:update class_kit",
-            "@php ./vendor/bin/concrete c5:package:update lgt_toolkit"
-		]
+        "test": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' vendor/bin/phpunit",
+		"test-coverage": "php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED' vendor/bin/phpunit --coverage-text",
+        "format": "php-cs-fixer fix",
+		"format:check": "php-cs-fixer check --diff"
     },
 	"bin": [
-		"bin/classkit-resources",
-		"bin/toolkit-resources",
-		"bin/themekit-resources"
+		"bin/install-lgt-resources",
+		"bin/uninstall-lgt-resources"
 	],
     "extra": {
         "class": "Limegreentangerine\\Installers\\Plugin"

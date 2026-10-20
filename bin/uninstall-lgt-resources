@@ -1,0 +1,132 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$projectRoot = getcwd();
+
+// echo "Uninstalling LGT Toolkit from Concrete..." . PHP_EOL;
+
+// $command = [
+//     './vendor/bin/concrete',
+//     'c5:package:uninstall',
+//     'lgt_toolkit'
+// ];
+
+// $process = proc_open(
+//     $command,
+//     [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+//     $pipes,
+//     $projectRoot
+// );
+
+// if (!is_resource($process)) {
+//     throw new RuntimeException('Unable to run c5 command.');
+// }
+
+// $exitCode = proc_close($process);
+// if ($exitCode !== 0) {
+//     exit($exitCode);
+// }
+
+// echo "Uninstalling LGT Toolkit from Concrete..." . PHP_EOL;
+
+// $command = [
+//     './vendor/bin/concrete',
+//     'c5:package:uninstall',
+//     'class_kit'
+// ];
+
+// $process = proc_open(
+//     $command,
+//     [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+//     $pipes,
+//     $projectRoot
+// );
+
+// if (!is_resource($process)) {
+//     throw new RuntimeException('Unable to run c5 command.');
+// }
+
+// $exitCode = proc_close($process);
+// if ($exitCode !== 0) {
+//     exit($exitCode);
+// }
+
+echo "Uninstalling ClassKit resources..." . PHP_EOL;
+
+// install required npm packages
+$commands = [
+    [
+        'npm',
+        'uninstall',
+        '--loglevel=error',
+        '--save-dev',
+        'typescript',
+        'ts-loader',
+        '@types/node',
+        'svelte',
+        'svelte-loader',
+        'svelte-preprocess',
+        'resolve-url-loader',
+        'sass',
+        'sass-loader',
+    ]
+];
+
+echo "Uninstalling npm packages..." . PHP_EOL;
+
+foreach ($commands as $command) {
+    $process = proc_open(
+        $command,
+        [0 => STDIN, 1 => STDOUT, 2 => STDERR],
+        $pipes,
+        $projectRoot
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Unable to start npm.');
+    }
+
+    $exitCode = proc_close($process);
+    if ($exitCode !== 0) {
+        exit($exitCode);
+    }
+}
+
+$filesToRemove = [
+    './svelte-components.json',
+    './tsconfig.json',
+    './svelte.config.js',
+    './svelte.d.ts'
+];
+
+foreach ($filesToRemove as $ftr) {
+    if (file_exists($ftr)) {
+        if (!unlink($ftr)) {
+            fwrite(STDERR, "Unable to remove: {$ftr}\n");
+        }
+    }
+}
+
+$tsDestinationFolder = './resources/ts';
+$tsIterator = is_dir($tsDestinationFolder)
+    ? new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($tsDestinationFolder, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    )
+    : [];
+
+foreach ($tsIterator as $item) {
+    $pathname = $item->getPathname();
+    $removed = $item->isDir() ? rmdir($pathname) : unlink($pathname);
+    if (!$removed) {
+        fwrite(STDERR, "Unable to remove: {$pathname}\n");
+    }
+}
+
+if (is_dir($tsDestinationFolder) && !rmdir($tsDestinationFolder)) {
+    fwrite(STDERR, "Unable to remove: {$tsDestinationFolder}\n");
+}
+
+echo "ClassKit resources uninstalled" . PHP_EOL;
